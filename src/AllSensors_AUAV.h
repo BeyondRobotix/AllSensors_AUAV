@@ -33,7 +33,7 @@ public:
     ERROR_ALU     = 1<<0,
   };
 
-  enum PressureDifferentialUnit {
+  enum PressureUnit {
     IN_H2O = 'H',
     PASCAL = 'P',
   };
@@ -69,7 +69,7 @@ private:
 
   TwoWire *bus;
   float pressure_range;
-  PressureDifferentialUnit pressure_diff_unit;
+  PressureUnit pressure_diff_unit;
   TemperatureUnit temperature_unit;
 
   // Convert a raw digital differential pressure read from the sensor to a floating point value in inH2O.
@@ -143,7 +143,7 @@ public:
   AllSensors_AUAV(TwoWire *bus, SensorPressureRange pressure_range);
 
   // Set the configured pressure unit for data output (the default is inH2O).
-  void setPressureUnit(PressureDifferentialUnit pressure_diff_unit) {
+  void setPressureUnit(PressureUnit pressure_diff_unit) {
     this->pressure_diff_unit = pressure_diff_unit;
   }
 
@@ -156,10 +156,10 @@ public:
   // measurement which takes between 2.8ms (Single 16-bit) and 61.9ms (Average16 18-bit) to complete.
   // In the interim, isBusy() or (readStatus() directly) can be polled until the sensor no longer
   // reports itself busy, at which time the data registers can be read to find the result.
-  //
+
   // If no argument is provided, a single measurement is taken. Otherwise, a MeasurementType can be
   // provided to allow multiple averaged measurements to be taken.
-  void startMeasurement(MeasurementType measurement_type = MeasurementType::SINGLE);
+  void startMeasurement(SensorType type, MeasurementType measurement_type = MeasurementType::SINGLE);
 
   // Read the current status register from the sensor.
   uint8_t readStatus(SensorType type);
@@ -170,10 +170,9 @@ public:
     return isBusy(readStatus(type));
   }
 
-  // Read the data from the sensor. Passing a "wait" argument polls the sensor repeatedly until it is
-  // no longer busy. If wait is false, if the sensor is busy return "true" immediately indicating that
-  // data was not available. 
-  bool readData(bool wait, SensorType type);
+  // Read the data from the sensor. This function will read the data from the sensor and store it in
+  // the pressure and temperature member. Returns True if a reading was successfully taken.
+  bool readData(SensorType type);
 };
 
 #endif // ALLSENSORS_AUAV_H
