@@ -130,6 +130,9 @@ public:
   uint32_t raw_p = 0;
   uint32_t raw_t = 0;
 
+  unsigned long last_message_abs = 0;
+  unsigned long last_message_diff = 0;
+
   // Return true if the status byte input indicates that the sensor is currently busy.
   static bool isBusy(uint8_t status_arg) {
     return (status_arg & StatusFlags::BUSY) != 0;

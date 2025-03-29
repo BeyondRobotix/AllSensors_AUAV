@@ -23,28 +23,28 @@ void AllSensors_AUAV::startMeasurement(SensorType type, MeasurementType measurem
     default:
     return; // or handle error
   } 
-
   bus->write((uint8_t) measurement_type);
-  bus->write(0x00);
-  bus->write(0x00);
+  // bus->write(0x00); // reserved
+  // bus->write(0x00); // reserved
   bus->endTransmission();
 }
 
 uint8_t AllSensors_AUAV::readStatus(SensorType type) {
+  uint8_t address;
   switch (type) {
     case SensorType::DIFFERENTIAL:
-      bus->requestFrom(I2C_ADDRESS_DIFF, READ_STATUS_LENGTH);
+      address = I2C_ADDRESS_DIFF;
       break;
     case SensorType::ABSOLUTE:
-      bus->requestFrom(I2C_ADDRESS_ABS, READ_STATUS_LENGTH);
+      address = I2C_ADDRESS_ABS;
       break;
     default:
       return 0; // or handle error
   }
-
+  bus->beginTransmission(address);
+  bus->requestFrom(address, READ_STATUS_LENGTH);
   status = bus->read();
   bus->endTransmission();
-
   return status;
 }
 
@@ -64,7 +64,7 @@ bool AllSensors_AUAV::readData(SensorType type) {
     default:
       return false; // or handle error
   }
-
+  bus->beginTransmission(address);
   bus->requestFrom(address, (uint8_t) (READ_STATUS_LENGTH + READ_PRESSURE_LENGTH + READ_TEMPERATURE_LENGTH));
 
   // Read the 8-bit status data.
@@ -72,8 +72,8 @@ bool AllSensors_AUAV::readData(SensorType type) {
 
   if (isError(status)) {
     // An ALU or memory error occurred.
-    bus->endTransmission();
     Serial.println("AUAV Error: ALU or memory error occurred");
+    bus->endTransmission();
     return false;
   }
 
@@ -92,8 +92,6 @@ bool AllSensors_AUAV::readData(SensorType type) {
   *((uint8_t *)(&raw_t)+2) = bus->read();
   *((uint8_t *)(&raw_t)+1) = bus->read();
   *((uint8_t *)(&raw_t)+0) = bus->read();
-  
-  bus->endTransmission();
 
   switch (type) {
     case SensorType::DIFFERENTIAL:
@@ -107,6 +105,6 @@ bool AllSensors_AUAV::readData(SensorType type) {
     default:
       break;
   }
-
+  bus->endTransmission();
   return true;
 }
