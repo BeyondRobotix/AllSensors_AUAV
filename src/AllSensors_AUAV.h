@@ -175,7 +175,8 @@ public:
 
   // Read the data from the sensor. This function will read the data from the sensor and store it in
   // the pressure and temperature member. Returns True if a reading was successfully taken.
-  bool readData(SensorType type);
+  // Return Value   0: Success, 1: AUAV Error, 2: Sensor is busy, 3: Invalid sensor type
+  uint8_t readData(SensorType type);
 };
 
 #endif // ALLSENSORS_AUAV_H
