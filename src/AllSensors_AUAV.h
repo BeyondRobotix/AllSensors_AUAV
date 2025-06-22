@@ -67,6 +67,9 @@ private:
   // The value of a zero reference pressure, 2^23.
   static constexpr uint32_t PRESSURE_ZERO_REF = (uint32_t) 1 << 23;
 
+  // The value of a zero reference pressure, 0.1 * 2^24.
+  static constexpr uint32_t ABS_PRESSURE_ZERO_REF = FULL_SCALE_REF / 10;
+
   TwoWire *bus;
   float pressure_range;
   PressureUnit pressure_diff_unit;
@@ -76,21 +79,21 @@ private:
   float transferDifferentialPressure(unsigned long raw_value) {
     // Based on the following formula in the datasheet:
     //     Pressure(inH2O) = 1.25 x ((P_out_dig - OS_dig) / 2^24) x FSS(inH2O)
-    return 1.25 * (((float) raw_value - PRESSURE_ZERO_REF) / FULL_SCALE_REF) * pressure_range;    
+    return 1.25f * ((raw_value - PRESSURE_ZERO_REF) / FULL_SCALE_REF) * pressure_range;    
   }
 
     // Convert a raw digital absolute pressure read from the sensor to a floating point value in mbar.
-    float transferAbsolutePressure(unsigned long raw_value) {
+  float transferAbsolutePressure(unsigned long raw_value) {
       // Based on the following formula in the datasheet:
       //     Pressure(inH2O) = 1.25 x ((P_out_dig - OS_dig) / 2^24) x FSS(inH2O)
-      return 250 + 1.25 * (((float) raw_value - PRESSURE_ZERO_REF) / FULL_SCALE_REF) * 1000;    
+      return 250 + 1250 * ((raw_value - ABS_PRESSURE_ZERO_REF) / FULL_SCALE_REF);    
     }
 
   // Convert a raw digital temperature read from the sensor to a floating point value in Celcius.
   float transferTemperature(unsigned long raw_value) {
     // Based on the following formula in the datasheet:
     //     Temperature(degC) = ((T_out_dig * 155) / 2^24) - 45
-    return (((float) raw_value * 155.0) / FULL_SCALE_REF) - 45.0;
+    return ((raw_value * 155.0f) / FULL_SCALE_REF) - 45.0f;
   }
 
   // Convert the input in inH2O to the configured pressure output unit.
