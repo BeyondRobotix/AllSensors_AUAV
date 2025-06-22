@@ -73,6 +73,7 @@ private:
   TwoWire *bus;
   float pressure_range;
   PressureUnit pressure_diff_unit;
+  PressureUnit pressure_abs_unit;
   TemperatureUnit temperature_unit;
 
   // Convert a raw digital differential pressure read from the sensor to a floating point value in inH2O.
@@ -93,17 +94,28 @@ private:
   float transferTemperature(unsigned long raw_value) {
     // Based on the following formula in the datasheet:
     //     Temperature(degC) = ((T_out_dig * 155) / 2^24) - 45
-    return ((raw_value * 155.0f) / FULL_SCALE_REF) - 45.0f;
+    return (((float)raw_value * 155.0f) / FULL_SCALE_REF) - 45.0f;
   }
 
   // Convert the input in inH2O to the configured pressure output unit.
-  float convertPressure(float in_h2o) {
+  float convertDiffPressure(float in_h2o) {
     switch(pressure_diff_unit) {
       case PASCAL:
-        return 249.08 * in_h2o;
+        return 249.08f * in_h2o;
       case IN_H2O:
       default:
         return in_h2o;
+    }
+  }
+
+  // Convert the absolute pressure in mbar to the configured pressure output unit.
+  float convertAbsPressure(float mbar) {
+    switch(pressure_abs_unit) {
+      case PASCAL:
+        return mbar * 100.0f; // Convert mbar to Pascal
+      case IN_H2O:
+      default:
+        return mbar / 249.08f; // Convert mbar to inH2O
     }
   }
 
@@ -111,9 +123,9 @@ private:
   float convertTemperature(float degree_c) {
     switch(temperature_unit) {
       case FAHRENHEIT:
-        return degree_c * 1.8 + 32.0;
+        return degree_c * 1.8f + 32.0f;
       case KELVIN:
-        return degree_c + 273.15;
+        return degree_c + 273.15f;
       case CELCIUS:
       default:
         return degree_c;
@@ -146,17 +158,27 @@ public:
     return (status_arg & (StatusFlags::ERROR_MEMORY | StatusFlags::ERROR_ALU)) != 0;
   }
 
-  AllSensors_AUAV(TwoWire *bus, SensorPressureRange pressure_range);
+  AllSensors_AUAV(TwoWire *bus);
 
   // Set the configured pressure unit for data output (the default is inH2O).
-  void setPressureUnit(PressureUnit pressure_diff_unit) {
+  void setPressureDiffUnit(PressureUnit pressure_diff_unit) {
     this->pressure_diff_unit = pressure_diff_unit;
   }
+
+  // Set the configured pressure unit for data output (the default is inH2O).
+  void setPressureAbsUnit(PressureUnit pressure_abs_unit) {
+    this->pressure_abs_unit = pressure_abs_unit;
+  } 
 
   // Set the configured temperature unit for data output (the default is Celcius).
   void setTemperatureUnit(TemperatureUnit temperature_unit) {
     this->temperature_unit = temperature_unit;
   }
+
+  // Set the configured pressure range for the sensor (the default is 10 inH2O).
+  void setPressureRange(float _pressure_range) {
+    this->pressure_range = _pressure_range;
+  } 
 
   // Request that the sensor start a measurement. Following this command, the sensor will begin a
   // measurement which takes between 2.8ms (Single 16-bit) and 61.9ms (Average16 18-bit) to complete.

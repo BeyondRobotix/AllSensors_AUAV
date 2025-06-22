@@ -2,13 +2,11 @@
 
 #include <math.h>
 
-AllSensors_AUAV::AllSensors_AUAV(TwoWire *bus, SensorPressureRange pressureRange) : pressure_diff_unit(PressureUnit::IN_H2O),
-                                                                                    temperature_unit(TemperatureUnit::CELCIUS)
-{
+AllSensors_AUAV::AllSensors_AUAV(TwoWire *bus) : pressure_diff_unit(PressureUnit::PASCAL),
+                                                pressure_abs_unit(PressureUnit::PASCAL),
+                                                temperature_unit(TemperatureUnit::KELVIN)
+    {
     this->bus = bus;
-
-    // Scaling factor for differential pressure sensor
-    pressure_range = pressureRange * 2;
 }
 
 void AllSensors_AUAV::startMeasurement(SensorType type, MeasurementType measurement_type)
@@ -102,11 +100,11 @@ uint8_t AllSensors_AUAV::readData(SensorType type)
     switch (type)
     {
     case SensorType::DIFFERENTIAL:
-        pressure_d = convertPressure(transferDifferentialPressure(raw_p));
+        pressure_d = convertDiffPressure(transferDifferentialPressure(raw_p));
         temperature_d = convertTemperature(transferTemperature(raw_t));
         break;
     case SensorType::ABSOLUTE:
-        pressure_a = convertPressure(transferAbsolutePressure(raw_p));
+        pressure_a = convertAbsPressure(transferAbsolutePressure(raw_p));
         temperature_a = convertTemperature(transferTemperature(raw_t));
         break;
     default:
